@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Handwritten Chinese Recognition</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link href="./css/style.css" rel="stylesheet" type="text/css" />
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+		 crossorigin="anonymous">
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+		 crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<div>
+
+			<h1>Draw Hanzi here</h1>
+			<div id="drawingCanvas" style='background-color: aliceblue;width:250px;height:250px;cursor:url("./resource/pen.ico"),auto;'></div>
+			<div class="btn-group" role="group">
+				<button id="removeLastBtn" type="button" class="btn btn-warning">Remove last stroke</button>
+				<button id="clearBtn" type="button" class="btn btn-danger">Clear everything</button>
+			</div>
+
+			<h1>Recognized Result</h1>
+			<div id="resultArea" style="border: 2px solid #a0a0a0; padding: 4px;height: 80px;width: 600px;font-size: 48px;background-color: #FAFAFA;overflow: hidden;color: #606060;"></div>
+
+		</div>
+
+		<script src="./js/jquery-3.1.1.min.js"></script>
+		<script src="./js/hanzilookup.min.js"></script>
+		<script>
+			var app = (function() {
+				var canvasDrawingArea;
+
+				$(document).ready(function() {
+					HanziLookup.init("hanzi", "./data/data.json", initialize);
+				});
+
+				function initialize(success) {
+					if (!success) {
+						alert("Fail to initialize!");
+						return;
+					}
+					canvasDrawingArea = HanziLookup.DrawingBoard($("#drawingCanvas").first(), recognizeHanzi);
+					$("#removeLastBtn").click(function(evt) {
+						canvasDrawingArea.undoStroke();
+						canvasDrawingArea.redraw();
+						recognizeHanzi();
+					});
+					$("#clearBtn").click(function(evt) {
+						canvasDrawingArea.clearCanvas();
+						canvasDrawingArea.redraw();
+						$("#resultArea").html("");
+						recognizeHanzi();
+					});
+				}
+
+				function recognizeHanzi() {
+					var strokes = canvasDrawingArea.cloneStrokes();
+					var recognizeResult = new HanziLookup.AnalyzedCharacter(strokes);
+					var recognizer = new HanziLookup.Matcher("hanzi");
+					recognizer.match(recognizeResult, 12, function(matches) {
+						displayHanzi($("#resultArea"), matches);
+					});
+				}
+
+				function displayHanzi(displayArea, results) {
+					displayArea.html("");
+					for (var i = 0; i != results.length; ++i) {
+						displayArea.append("<span>" + results[i].character + "</span>");
+					}
+				}
+			})();
+		</script>
+	</body>
+</html>
